@@ -70,7 +70,8 @@ src/
 │       ├── dto/
 │       │   ├── create-account.dto.ts
 │       │   ├── deposit.dto.ts
-│       │   └── withdraw.dto.ts
+│       │   ├── withdraw.dto.ts
+│       │   └── statement-query.dto.ts
 │       ├── responses/
 │       │   └── account.response.ts
 │       ├── tests/
@@ -90,6 +91,7 @@ src/
 ```
 
 Each API module follows a consistent structure:
+
 - **controllers/** -- HTTP request handlers
 - **services/** -- business logic
 - **dto/** -- request validation schemas
@@ -132,6 +134,7 @@ docker compose up -d
 ```
 
 This starts two containers:
+
 - **PostgreSQL** on port `5432`
 - **pgAdmin** on port `5050` (see [pgAdmin](#pgadmin) section)
 
@@ -159,33 +162,33 @@ Tables are created automatically on startup via TypeORM's `synchronize` option.
 
 ### Person
 
-| Column      | Type         | Constraints     |
-|-------------|--------------|-----------------|
-| person_id   | int          | PK, auto-increment |
-| name        | varchar(255) | not null        |
-| document    | varchar(50)  | not null, unique |
-| birth_date  | date         | not null        |
+| Column     | Type         | Constraints        |
+| ---------- | ------------ | ------------------ |
+| person_id  | int          | PK, auto-increment |
+| name       | varchar(255) | not null           |
+| document   | varchar(50)  | not null, unique   |
+| birth_date | date         | not null           |
 
 ### Account
 
-| Column                 | Type           | Constraints          |
-|------------------------|----------------|----------------------|
-| account_id             | int            | PK, auto-increment   |
-| person_id              | int            | FK -> person, not null |
-| balance                | decimal(16,2)  | default 0            |
-| daily_withdrawal_limit | decimal(16,2)  | not null             |
-| active_flag            | boolean        | default true         |
-| account_type           | smallint       | not null             |
-| create_date            | timestamp      | auto-generated       |
+| Column                 | Type          | Constraints            |
+| ---------------------- | ------------- | ---------------------- |
+| account_id             | int           | PK, auto-increment     |
+| person_id              | int           | FK -> person, not null |
+| balance                | decimal(16,2) | default 0              |
+| daily_withdrawal_limit | decimal(16,2) | not null               |
+| active_flag            | boolean       | default true           |
+| account_type           | smallint      | not null               |
+| create_date            | timestamp     | auto-generated         |
 
 ### Account Transaction
 
-| Column          | Type          | Constraints           |
-|-----------------|---------------|-----------------------|
-| transaction_id  | int           | PK, auto-increment    |
-| account_id      | int           | FK -> account, not null |
-| value           | decimal(16,2) | not null              |
-| create_date     | timestamp     | auto-generated        |
+| Column         | Type          | Constraints             |
+| -------------- | ------------- | ----------------------- |
+| transaction_id | int           | PK, auto-increment      |
+| account_id     | int           | FK -> account, not null |
+| value          | decimal(16,2) | not null                |
+| create_date    | timestamp     | auto-generated          |
 
 **Relationships:** Person (1) -> (N) Account (1) -> (N) AccountTransaction
 
@@ -217,6 +220,7 @@ curl http://localhost:3000/health
 ```
 
 **Responses:**
+
 - `200` -- Service is healthy
 
 ---
@@ -247,6 +251,7 @@ curl -X POST http://localhost:3000/persons \
 ```
 
 **Responses:**
+
 - `201` -- Person created successfully
 - `409` -- Person with this document already exists
 
@@ -272,8 +277,8 @@ curl -X POST http://localhost:3000/accounts \
 {
   "accountId": 1,
   "personId": 1,
-  "balance": 1000.00,
-  "dailyWithdrawalLimit": 500.00,
+  "balance": 1000.0,
+  "dailyWithdrawalLimit": 500.0,
   "activeFlag": true,
   "accountType": 1,
   "createDate": "2026-02-24T12:00:00.000Z"
@@ -281,6 +286,7 @@ curl -X POST http://localhost:3000/accounts \
 ```
 
 **Responses:**
+
 - `201` -- Account created successfully
 - `404` -- Person not found
 
@@ -289,7 +295,7 @@ curl -X POST http://localhost:3000/accounts \
 #### Get Balance
 
 ```
-GET /accounts/:id/balance
+GET /accounts/:accountId/balance
 ```
 
 ```bash
@@ -301,11 +307,12 @@ curl http://localhost:3000/accounts/1/balance
 ```json
 {
   "accountId": 1,
-  "balance": 1000.00
+  "balance": 1000.0
 }
 ```
 
 **Responses:**
+
 - `200` -- Balance retrieved
 - `404` -- Account not found
 
@@ -314,7 +321,7 @@ curl http://localhost:3000/accounts/1/balance
 #### Deposit
 
 ```
-POST /accounts/:id/deposit
+POST /accounts/:accountId/deposit
 ```
 
 ```bash
@@ -329,8 +336,8 @@ curl -X POST http://localhost:3000/accounts/1/deposit \
 {
   "accountId": 1,
   "personId": 1,
-  "balance": 1250.00,
-  "dailyWithdrawalLimit": 500.00,
+  "balance": 1250.0,
+  "dailyWithdrawalLimit": 500.0,
   "activeFlag": true,
   "accountType": 1,
   "createDate": "2026-02-24T12:00:00.000Z"
@@ -338,6 +345,7 @@ curl -X POST http://localhost:3000/accounts/1/deposit \
 ```
 
 **Responses:**
+
 - `201` -- Deposit successful
 - `400` -- Account is inactive
 - `404` -- Account not found
@@ -347,7 +355,7 @@ curl -X POST http://localhost:3000/accounts/1/deposit \
 #### Withdraw
 
 ```
-POST /accounts/:id/withdraw
+POST /accounts/:accountId/withdraw
 ```
 
 ```bash
@@ -362,8 +370,8 @@ curl -X POST http://localhost:3000/accounts/1/withdraw \
 {
   "accountId": 1,
   "personId": 1,
-  "balance": 900.00,
-  "dailyWithdrawalLimit": 500.00,
+  "balance": 900.0,
+  "dailyWithdrawalLimit": 500.0,
   "activeFlag": true,
   "accountType": 1,
   "createDate": "2026-02-24T12:00:00.000Z"
@@ -371,11 +379,13 @@ curl -X POST http://localhost:3000/accounts/1/withdraw \
 ```
 
 **Responses:**
+
 - `201` -- Withdrawal successful
 - `400` -- Account is inactive / Insufficient balance / Daily withdrawal limit exceeded
 - `404` -- Account not found
 
 **Business rules:**
+
 - The account must be active
 - The account must have sufficient balance
 - The withdrawal must not exceed the daily withdrawal limit (sum of all withdrawals for the current day)
@@ -385,7 +395,7 @@ curl -X POST http://localhost:3000/accounts/1/withdraw \
 #### Block Account
 
 ```
-POST /accounts/:id/block
+POST /accounts/:accountId/block
 ```
 
 ```bash
@@ -398,8 +408,8 @@ curl -X POST http://localhost:3000/accounts/1/block
 {
   "accountId": 1,
   "personId": 1,
-  "balance": 1000.00,
-  "dailyWithdrawalLimit": 500.00,
+  "balance": 1000.0,
+  "dailyWithdrawalLimit": 500.0,
   "activeFlag": false,
   "accountType": 1,
   "createDate": "2026-02-24T12:00:00.000Z"
@@ -407,6 +417,7 @@ curl -X POST http://localhost:3000/accounts/1/block
 ```
 
 **Responses:**
+
 - `201` -- Account blocked successfully
 - `400` -- Account is already blocked
 - `404` -- Account not found
@@ -418,28 +429,28 @@ Once blocked, deposits and withdrawals are rejected.
 #### Account Statement
 
 ```
-GET /accounts/:id/statement
+GET /accounts/:accountId/statement
 ```
 
 **Optional query parameters:**
 
-| Parameter | Format       | Description         |
-|-----------|--------------|---------------------|
-| `from`    | `YYYY-MM-DD` | Start date (inclusive) |
-| `to`      | `YYYY-MM-DD` | End date (inclusive)   |
+| Parameter  | Format       | Description            |
+| ---------- | ------------ | ---------------------- |
+| `fromDate` | `YYYY-MM-DD` | Start date (inclusive) |
+| `toDate`   | `YYYY-MM-DD` | End date (inclusive)   |
 
 ```bash
 # All transactions
 curl http://localhost:3000/accounts/1/statement
 
 # Filter by date range
-curl "http://localhost:3000/accounts/1/statement?from=2026-01-01&to=2026-01-31"
+curl "http://localhost:3000/accounts/1/statement?fromDate=2026-01-01&toDate=2026-01-31"
 
 # Filter from a start date
-curl "http://localhost:3000/accounts/1/statement?from=2026-01-01"
+curl "http://localhost:3000/accounts/1/statement?fromDate=2026-01-01"
 
 # Filter up to an end date
-curl "http://localhost:3000/accounts/1/statement?to=2026-02-28"
+curl "http://localhost:3000/accounts/1/statement?toDate=2026-02-28"
 ```
 
 **Response:**
@@ -449,13 +460,13 @@ curl "http://localhost:3000/accounts/1/statement?to=2026-02-28"
   {
     "transactionId": 2,
     "accountId": 1,
-    "value": -100.00,
+    "value": -100.0,
     "transactionDate": "2026-02-24T14:30:00.000Z"
   },
   {
     "transactionId": 1,
     "accountId": 1,
-    "value": 250.00,
+    "value": 250.0,
     "transactionDate": "2026-02-24T10:00:00.000Z"
   }
 ]
@@ -464,6 +475,7 @@ curl "http://localhost:3000/accounts/1/statement?to=2026-02-28"
 Transactions are ordered by date descending. Positive values are deposits, negative values are withdrawals.
 
 **Responses:**
+
 - `200` -- Statement retrieved
 - `404` -- Account not found
 
@@ -476,6 +488,7 @@ Interactive API documentation is auto-generated using Swagger (OpenAPI).
 **Access:** http://localhost:3000/api/docs
 
 The Swagger UI provides:
+
 - A visual overview of all available endpoints grouped by module (Health, Persons, Accounts)
 - Request/response schemas with example values
 - The ability to test endpoints directly from the browser
@@ -494,7 +507,7 @@ pgAdmin is included in the Docker Compose setup for database administration.
 **Login credentials:**
 
 | Field    | Value            |
-|----------|------------------|
+| -------- | ---------------- |
 | Email    | `admin@bond.com` |
 | Password | `admin`          |
 
@@ -504,10 +517,10 @@ pgAdmin is included in the Docker Compose setup for database administration.
 2. **General** tab: set Name to `bond`
 3. **Connection** tab:
 
-| Field    | Value      |
-|----------|------------|
-| Host     | `postgres` |
-| Port     | `5432`     |
+| Field    | Value       |
+| -------- | ----------- |
+| Host     | `postgres`  |
+| Port     | `5432`      |
 | Username | `bond_user` |
 | Password | `bond_pass` |
 
@@ -517,15 +530,15 @@ pgAdmin is included in the Docker Compose setup for database administration.
 
 ## Available Scripts
 
-| Command               | Description                          |
-|-----------------------|--------------------------------------|
-| `npm run start`       | Start the server                     |
-| `npm run start:dev`   | Start in watch mode (development)    |
-| `npm run start:debug` | Start in debug mode with watch       |
-| `npm run start:prod`  | Start in production mode             |
-| `npm run build`       | Compile the project                  |
-| `npm run lint`        | Run ESLint with auto-fix             |
-| `npm run format`      | Format code with Prettier            |
-| `npm run test`        | Run unit tests                       |
-| `npm run test:e2e`    | Run end-to-end tests                 |
-| `npm run test:cov`    | Run tests with coverage report       |
+| Command               | Description                       |
+| --------------------- | --------------------------------- |
+| `npm run start`       | Start the server                  |
+| `npm run start:dev`   | Start in watch mode (development) |
+| `npm run start:debug` | Start in debug mode with watch    |
+| `npm run start:prod`  | Start in production mode          |
+| `npm run build`       | Compile the project               |
+| `npm run lint`        | Run ESLint with auto-fix          |
+| `npm run format`      | Format code with Prettier         |
+| `npm run test`        | Run unit tests                    |
+| `npm run test:e2e`    | Run end-to-end tests              |
+| `npm run test:cov`    | Run tests with coverage report    |

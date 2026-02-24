@@ -85,7 +85,7 @@ describe('AccountController', () => {
     it('should call transactionService.getStatement with date params', async () => {
       transactionService.getStatement!.mockResolvedValue([]);
 
-      const result = await controller.getStatement(1, '2026-01-01', '2026-01-31');
+      const result = await controller.getStatement(1, { fromDate: '2026-01-01', toDate: '2026-01-31' });
 
       expect(transactionService.getStatement).toHaveBeenCalledWith(1, '2026-01-01', '2026-01-31');
       expect(result).toEqual([]);

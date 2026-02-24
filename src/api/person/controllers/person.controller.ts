@@ -12,7 +12,10 @@ export class PersonController {
   @Post()
   @ApiOperation({ summary: 'Create a new person' })
   @ApiResponse({ status: 201, description: 'Person created successfully' })
-  @ApiResponse({ status: 409, description: 'Person with this document already exists' })
+  @ApiResponse({
+    status: 409,
+    description: 'Person with this document already exists',
+  })
   create(@Body() dto: CreatePersonDto): Promise<PersonResponse> {
     return this.personService.create(dto);
   }

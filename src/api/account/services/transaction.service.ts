@@ -114,8 +114,8 @@ export class TransactionService {
 
   async getStatement(
     accountId: number,
-    from?: string,
-    to?: string,
+    fromDate?: string,
+    toDate?: string,
   ): Promise<TransactionResponse[]> {
     const account = await this.accountRepository.findOneBy({ accountId });
 
@@ -125,12 +125,12 @@ export class TransactionService {
 
     const where: FindOptionsWhere<AccountTransaction> = { accountId };
 
-    if (from && to) {
-      where.transactionDate = Between(new Date(from), new Date(to));
-    } else if (from) {
-      where.transactionDate = MoreThanOrEqual(new Date(from));
-    } else if (to) {
-      where.transactionDate = LessThanOrEqual(new Date(to));
+    if (fromDate && toDate) {
+      where.transactionDate = Between(new Date(fromDate), new Date(toDate));
+    } else if (fromDate) {
+      where.transactionDate = MoreThanOrEqual(new Date(fromDate));
+    } else if (toDate) {
+      where.transactionDate = LessThanOrEqual(new Date(toDate));
     }
 
     return this.dataSource.getRepository(AccountTransaction).find({
