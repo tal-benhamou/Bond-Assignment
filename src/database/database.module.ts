@@ -16,7 +16,7 @@ import { Person, Account, AccountTransaction } from './entities';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         entities: [Person, Account, AccountTransaction],
-        synchronize: true,
+        synchronize: config.get<string>('NODE_ENV') !== 'production',
       }),
     }),
   ],

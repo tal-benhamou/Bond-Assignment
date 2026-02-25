@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Person } from './person.entity';
 import { AccountTransaction } from './account-transaction.entity';
+import { AccountType } from '../enums/account-type.enum';
 
 @Entity('account')
 export class Account {
@@ -33,7 +34,7 @@ export class Account {
   activeFlag: boolean;
 
   @Column({ name: 'account_type', type: 'smallint' })
-  accountType: number;
+  accountType: AccountType;
 
   @CreateDateColumn({ name: 'create_date', type: 'timestamp' })
   createDate: Date;

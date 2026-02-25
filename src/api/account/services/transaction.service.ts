@@ -3,12 +3,11 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
-  Repository,
   DataSource,
   Between,
   FindOptionsWhere,
+  LessThan,
   LessThanOrEqual,
   MoreThanOrEqual,
 } from 'typeorm';
@@ -22,15 +21,14 @@ import type {
 
 @Injectable()
 export class TransactionService {
-  constructor(
-    @InjectRepository(Account)
-    private readonly accountRepository: Repository<Account>,
-    private readonly dataSource: DataSource,
-  ) {}
+  constructor(private readonly dataSource: DataSource) {}
 
   async deposit(accountId: number, dto: DepositDto): Promise<AccountResponse> {
     return this.dataSource.transaction(async (manager) => {
-      const account = await manager.findOneBy(Account, { accountId });
+      const account = await manager.findOne(Account, {
+        where: { accountId },
+        lock: { mode: 'pessimistic_write' },
+      });
 
       if (!account) {
         throw new NotFoundException(`Account with id ${accountId} not found`);
@@ -58,7 +56,10 @@ export class TransactionService {
     dto: WithdrawDto,
   ): Promise<AccountResponse> {
     return this.dataSource.transaction(async (manager) => {
-      const account = await manager.findOneBy(Account, { accountId });
+      const account = await manager.findOne(Account, {
+        where: { accountId },
+        lock: { mode: 'pessimistic_write' },
+      });
 
       if (!account) {
         throw new NotFoundException(`Account with id ${accountId} not found`);
@@ -80,7 +81,7 @@ export class TransactionService {
       const todaysWithdrawals = await manager.find(AccountTransaction, {
         where: {
           accountId,
-          value: Between(-Infinity, -0.01),
+          value: LessThan(0),
           transactionDate: Between(todayStart, todayEnd),
         },
       });
@@ -117,7 +118,8 @@ export class TransactionService {
     fromDate?: string,
     toDate?: string,
   ): Promise<TransactionResponse[]> {
-    const account = await this.accountRepository.findOneBy({ accountId });
+    const accountRepo = this.dataSource.getRepository(Account);
+    const account = await accountRepo.findOneBy({ accountId });
 
     if (!account) {
       throw new NotFoundException(`Account with id ${accountId} not found`);

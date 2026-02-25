@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { AccountService } from '../services/account.service';
 import { PersonService } from '../../person/services/person.service';
 import { Account, Person } from '../../../database/entities';
+import { AccountType } from '../../../database/enums/account-type.enum';
 
 describe('AccountService', () => {
   let service: AccountService;
@@ -28,7 +29,7 @@ describe('AccountService', () => {
     balance: 1000,
     dailyWithdrawalLimit: 500,
     activeFlag: true,
-    accountType: 1,
+    accountType: AccountType.PRIVATE,
     createDate: new Date(),
     person: mockPerson,
     transactions: [],
@@ -61,7 +62,7 @@ describe('AccountService', () => {
   });
 
   describe('create', () => {
-    const dto = { personId: 1, balance: 1000, dailyWithdrawalLimit: 500, accountType: 1 };
+    const dto = { personId: 1, balance: 1000, dailyWithdrawalLimit: 500, accountType: AccountType.PRIVATE };
 
     it('should create an account successfully', async () => {
       personService.findById!.mockResolvedValue(mockPerson);

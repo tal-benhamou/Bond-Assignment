@@ -1,10 +1,11 @@
+import type { AccountType } from '../../../database/enums/account-type.enum';
 export interface AccountResponse {
   accountId: number;
   personId: number;
   balance: number;
   dailyWithdrawalLimit: number;
   activeFlag: boolean;
-  accountType: number;
+  accountType: AccountType;
   createDate: Date;
 }
 

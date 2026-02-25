@@ -3,6 +3,7 @@ import { AccountController } from '../controllers/account.controller';
 import { AccountService } from '../services/account.service';
 import { TransactionService } from '../services/transaction.service';
 import { Account, Person } from '../../../database/entities';
+import { AccountType } from '../../../database/enums/account-type.enum';
 
 describe('AccountController', () => {
   let controller: AccountController;
@@ -23,7 +24,7 @@ describe('AccountController', () => {
     balance: 1000,
     dailyWithdrawalLimit: 500,
     activeFlag: true,
-    accountType: 1,
+    accountType: AccountType.PRIVATE,
     createDate: new Date(),
     person: mockPerson,
     transactions: [],
@@ -59,8 +60,13 @@ describe('AccountController', () => {
 
   describe('create', () => {
     it('should call accountService.create and return the result', async () => {
-      const dto = { personId: 1, balance: 1000, dailyWithdrawalLimit: 500, accountType: 1 };
-      accountService.create!.mockResolvedValue(mockAccount);
+      const dto = {
+        personId: 1,
+        balance: 1000,
+        dailyWithdrawalLimit: 500,
+        accountType: AccountType.PRIVATE,
+      };
+      accountService.create = jest.fn().mockResolvedValue(mockAccount);
 
       const result = await controller.create(dto);
 
@@ -72,7 +78,7 @@ describe('AccountController', () => {
   describe('getBalance', () => {
     it('should call accountService.getBalance and return the result', async () => {
       const expected = { accountId: 1, balance: 1000 };
-      accountService.getBalance!.mockResolvedValue(expected);
+      accountService.getBalance = jest.fn().mockResolvedValue(expected);
 
       const result = await controller.getBalance(1);
 
@@ -83,11 +89,18 @@ describe('AccountController', () => {
 
   describe('getStatement', () => {
     it('should call transactionService.getStatement with date params', async () => {
-      transactionService.getStatement!.mockResolvedValue([]);
+      transactionService.getStatement = jest.fn().mockResolvedValue([]);
 
-      const result = await controller.getStatement(1, { fromDate: '2026-01-01', toDate: '2026-01-31' });
+      const result = await controller.getStatement(1, {
+        fromDate: '2026-01-01',
+        toDate: '2026-01-31',
+      });
 
-      expect(transactionService.getStatement).toHaveBeenCalledWith(1, '2026-01-01', '2026-01-31');
+      expect(transactionService.getStatement).toHaveBeenCalledWith(
+        1,
+        '2026-01-01',
+        '2026-01-31',
+      );
       expect(result).toEqual([]);
     });
   });
@@ -95,11 +108,13 @@ describe('AccountController', () => {
   describe('deposit', () => {
     it('should call transactionService.deposit and return the result', async () => {
       const updated = { ...mockAccount, balance: 1250 };
-      transactionService.deposit!.mockResolvedValue(updated);
+      transactionService.deposit = jest.fn().mockResolvedValue(updated);
 
       const result = await controller.deposit(1, { value: 250 });
 
-      expect(transactionService.deposit).toHaveBeenCalledWith(1, { value: 250 });
+      expect(transactionService.deposit).toHaveBeenCalledWith(1, {
+        value: 250,
+      });
       expect(result.balance).toBe(1250);
     });
   });
@@ -107,11 +122,13 @@ describe('AccountController', () => {
   describe('withdraw', () => {
     it('should call transactionService.withdraw and return the result', async () => {
       const updated = { ...mockAccount, balance: 900 };
-      transactionService.withdraw!.mockResolvedValue(updated);
+      transactionService.withdraw = jest.fn().mockResolvedValue(updated);
 
       const result = await controller.withdraw(1, { value: 100 });
 
-      expect(transactionService.withdraw).toHaveBeenCalledWith(1, { value: 100 });
+      expect(transactionService.withdraw).toHaveBeenCalledWith(1, {
+        value: 100,
+      });
       expect(result.balance).toBe(900);
     });
   });
@@ -119,7 +136,7 @@ describe('AccountController', () => {
   describe('block', () => {
     it('should call accountService.block and return the result', async () => {
       const blocked = { ...mockAccount, activeFlag: false };
-      accountService.block!.mockResolvedValue(blocked);
+      accountService.block = jest.fn().mockResolvedValue(blocked);
 
       const result = await controller.block(1);
 

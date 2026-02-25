@@ -7,7 +7,10 @@ export class CreatePersonDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: '123456789', description: 'Unique identification document number' })
+  @ApiProperty({
+    example: '123456789',
+    description: 'Unique identification document number',
+  })
   @IsString()
   @IsNotEmpty()
   document: string;

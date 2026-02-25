@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
   Param,
   Query,
@@ -93,10 +94,10 @@ export class AccountController {
     return this.transactionService.withdraw(accountId, dto);
   }
 
-  @Post(':accountId/block')
+  @Patch(':accountId/block')
   @ApiOperation({ summary: 'Block an account' })
   @ApiParam({ name: 'accountId', description: 'Account ID' })
-  @ApiResponse({ status: 201, description: 'Account blocked successfully' })
+  @ApiResponse({ status: 200, description: 'Account blocked successfully' })
   @ApiResponse({ status: 400, description: 'Account is already blocked' })
   @ApiResponse({ status: 404, description: 'Account not found' })
   block(

@@ -12,8 +12,7 @@ A RESTful API for managing banking accounts, built with NestJS, TypeScript, Type
   - [1. Clone the Repository](#1-clone-the-repository)
   - [2. Install Dependencies](#2-install-dependencies)
   - [3. Configure Environment](#3-configure-environment)
-  - [4. Start the Database](#4-start-the-database)
-  - [5. Run the Server](#5-run-the-server)
+  - [4. Start the Services](#4-start-the-services)
 - [Database Schema](#database-schema)
 - [API Reference](#api-reference)
   - [Health](#health)
@@ -85,6 +84,8 @@ src/
 │   │   ├── account.entity.ts
 │   │   ├── account-transaction.entity.ts
 │   │   └── index.ts
+│   ├── enums/
+│   │   └── account-type.enum.ts
 │   └── database.module.ts
 ├── app.module.ts
 └── main.ts
@@ -117,26 +118,37 @@ npm install
 
 ### 3. Configure Environment
 
-Create a `.env` file in the project root (a default is already provided):
-
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=bond_user
-DB_PASSWORD=bond_pass
-DB_NAME=bond_db
-```
-
-### 4. Start the Database
+Copy the example environment file and adjust if needed:
 
 ```bash
-docker compose up -d
+cp .env.example .env
 ```
 
-This starts two containers:
+### 4. Start the Services
 
+#### Option A: Run everything in Docker
+
+```bash
+docker compose up --build
+```
+
+This starts three containers:
+
+- **API** on port `3000`
 - **PostgreSQL** on port `5432`
 - **pgAdmin** on port `5050` (see [pgAdmin](#pgadmin) section)
+
+#### Option B: Run only the database in Docker
+
+```bash
+docker compose up -d postgres pgadmin
+```
+
+Then start the API locally:
+
+```bash
+npm run start:dev
+```
 
 Verify the containers are running:
 
@@ -144,17 +156,11 @@ Verify the containers are running:
 docker compose ps
 ```
 
-### 5. Run the Server
-
-```bash
-npm run start:dev
-```
-
 The API will be available at **http://localhost:3000**.
 
 Swagger docs will be available at **http://localhost:3000/api/docs**.
 
-Tables are created automatically on startup via TypeORM's `synchronize` option.
+Tables are created automatically on startup via TypeORM's `synchronize` option (disabled when `NODE_ENV=production`).
 
 ---
 
@@ -171,15 +177,15 @@ Tables are created automatically on startup via TypeORM's `synchronize` option.
 
 ### Account
 
-| Column                 | Type          | Constraints            |
-| ---------------------- | ------------- | ---------------------- |
-| account_id             | int           | PK, auto-increment     |
-| person_id              | int           | FK -> person, not null |
-| balance                | decimal(16,2) | default 0              |
-| daily_withdrawal_limit | decimal(16,2) | not null               |
-| active_flag            | boolean       | default true           |
-| account_type           | smallint      | not null               |
-| create_date            | timestamp     | auto-generated         |
+| Column                 | Type          | Constraints                      |
+| ---------------------- | ------------- | -------------------------------- |
+| account_id             | int           | PK, auto-increment               |
+| person_id              | int           | FK -> person, not null           |
+| balance                | decimal(16,2) | default 0                        |
+| daily_withdrawal_limit | decimal(16,2) | not null                         |
+| active_flag            | boolean       | default true                     |
+| account_type           | smallint      | not null (1=Private, 2=Business) |
+| create_date            | timestamp     | auto-generated                   |
 
 ### Account Transaction
 
@@ -203,11 +209,11 @@ Cascade delete is enabled: deleting a person removes all associated accounts and
 #### Health Check
 
 ```
-GET /health
+GET /api/health
 ```
 
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3000/api/health
 ```
 
 **Response:**
@@ -230,11 +236,11 @@ curl http://localhost:3000/health
 #### Create a Person
 
 ```
-POST /persons
+POST /api/persons
 ```
 
 ```bash
-curl -X POST http://localhost:3000/persons \
+curl -X POST http://localhost:3000/api/persons \
   -H "Content-Type: application/json" \
   -d '{"name": "John Doe", "document": "123456789", "birthDate": "1990-05-15"}'
 ```
@@ -262,11 +268,11 @@ curl -X POST http://localhost:3000/persons \
 #### Create an Account
 
 ```
-POST /accounts
+POST /api/accounts
 ```
 
 ```bash
-curl -X POST http://localhost:3000/accounts \
+curl -X POST http://localhost:3000/api/accounts \
   -H "Content-Type: application/json" \
   -d '{"personId": 1, "balance": 1000.00, "dailyWithdrawalLimit": 500.00, "accountType": 1}'
 ```
@@ -295,11 +301,11 @@ curl -X POST http://localhost:3000/accounts \
 #### Get Balance
 
 ```
-GET /accounts/:accountId/balance
+GET /api/accounts/:accountId/balance
 ```
 
 ```bash
-curl http://localhost:3000/accounts/1/balance
+curl http://localhost:3000/api/accounts/1/balance
 ```
 
 **Response:**
@@ -321,11 +327,11 @@ curl http://localhost:3000/accounts/1/balance
 #### Deposit
 
 ```
-POST /accounts/:accountId/deposit
+POST /api/accounts/:accountId/deposit
 ```
 
 ```bash
-curl -X POST http://localhost:3000/accounts/1/deposit \
+curl -X POST http://localhost:3000/api/accounts/1/deposit \
   -H "Content-Type: application/json" \
   -d '{"value": 250.00}'
 ```
@@ -355,11 +361,11 @@ curl -X POST http://localhost:3000/accounts/1/deposit \
 #### Withdraw
 
 ```
-POST /accounts/:accountId/withdraw
+POST /api/accounts/:accountId/withdraw
 ```
 
 ```bash
-curl -X POST http://localhost:3000/accounts/1/withdraw \
+curl -X POST http://localhost:3000/api/accounts/1/withdraw \
   -H "Content-Type: application/json" \
   -d '{"value": 100.00}'
 ```
@@ -395,11 +401,11 @@ curl -X POST http://localhost:3000/accounts/1/withdraw \
 #### Block Account
 
 ```
-POST /accounts/:accountId/block
+PATCH /api/accounts/:accountId/block
 ```
 
 ```bash
-curl -X POST http://localhost:3000/accounts/1/block
+curl -X PATCH http://localhost:3000/api/accounts/1/block
 ```
 
 **Response:**
@@ -418,7 +424,7 @@ curl -X POST http://localhost:3000/accounts/1/block
 
 **Responses:**
 
-- `201` -- Account blocked successfully
+- `200` -- Account blocked successfully
 - `400` -- Account is already blocked
 - `404` -- Account not found
 
@@ -429,7 +435,7 @@ Once blocked, deposits and withdrawals are rejected.
 #### Account Statement
 
 ```
-GET /accounts/:accountId/statement
+GET /api/accounts/:accountId/statement
 ```
 
 **Optional query parameters:**
@@ -441,16 +447,16 @@ GET /accounts/:accountId/statement
 
 ```bash
 # All transactions
-curl http://localhost:3000/accounts/1/statement
+curl http://localhost:3000/api/accounts/1/statement
 
 # Filter by date range
-curl "http://localhost:3000/accounts/1/statement?fromDate=2026-01-01&toDate=2026-01-31"
+curl "http://localhost:3000/api/accounts/1/statement?fromDate=2026-01-01&toDate=2026-01-31"
 
 # Filter from a start date
-curl "http://localhost:3000/accounts/1/statement?fromDate=2026-01-01"
+curl "http://localhost:3000/api/accounts/1/statement?fromDate=2026-01-01"
 
 # Filter up to an end date
-curl "http://localhost:3000/accounts/1/statement?toDate=2026-02-28"
+curl "http://localhost:3000/api/accounts/1/statement?toDate=2026-02-28"
 ```
 
 **Response:**
@@ -494,7 +500,7 @@ The Swagger UI provides:
 - The ability to test endpoints directly from the browser
 - Detailed descriptions of parameters, query strings, and status codes
 
-> The server must be running (`npm run start:dev`) to access the docs.
+> The server must be running (via `docker compose up` or `npm run start:dev`) to access the docs.
 
 ---
 
